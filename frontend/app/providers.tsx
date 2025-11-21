@@ -18,7 +18,7 @@ import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthers
 
 // Dynamic chain configuration based on environment
 const isDevelopment = process.env.NODE_ENV === 'development';
-const chains = isDevelopment ? [hardhat, sepolia] : [sepolia];
+const chains: readonly [any, ...any[]] = isDevelopment ? [hardhat, sepolia] : [sepolia];
 
 const config = createConfig({
   chains,
