@@ -47,8 +47,51 @@ NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id_here
 - **Chain ID**: 11155111
 - **Currency Symbol**: SepoliaETH
 
+## 本地开发 vs 生产环境
+
+### 本地开发环境 (NODE_ENV=development)
+- ✅ 支持 Hardhat 本地网络 (http://localhost:8545)
+- ✅ 支持 Sepolia 测试网络
+- ✅ 默认连接到 Hardhat 网络
+
+### 生产环境 (Vercel部署)
+- ✅ 仅支持 Sepolia 测试网络
+- ✅ 需要设置 INFURA_API_KEY
+- ✅ 默认连接到 Sepolia 网络
+
+## MetaMask 网络配置
+
+### 添加 Hardhat 网络 (本地开发)
+```
+Network Name: Hardhat
+RPC URL: http://127.0.0.1:8545
+Chain ID: 31337
+Currency Symbol: ETH
+```
+
+### 添加 Sepolia 网络 (生产环境)
+```
+Network Name: Sepolia
+RPC URL: https://sepolia.infura.io/v3/YOUR_API_KEY
+Chain ID: 11155111
+Currency Symbol: SepoliaETH
+```
+
 ## 测试连接
 
+### 本地开发测试
+```bash
+# 启动本地Hardhat节点
+npm run node
+
+# 在另一个终端启动前端
+npm run dev
+
+# 访问 http://localhost:3000
+# MetaMask会默认连接到Hardhat网络
+```
+
+### 生产环境测试
 设置好环境变量后，应用应该能够:
 - ✅ 连接到 Sepolia 网络
 - ✅ 通过 MetaMask 连接钱包
