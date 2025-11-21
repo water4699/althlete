@@ -4,8 +4,8 @@ import type { ReactNode } from "react";
 import '@rainbow-me/rainbowkit/styles.css';
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, createConfig, http, type Chain } from 'wagmi';
-import { hardhat, sepolia } from 'wagmi/chains';
+import { WagmiProvider, createConfig, http } from 'wagmi';
+import { hardhat, sepolia, type Chain } from 'wagmi/chains';
 import { metaMask, injected } from 'wagmi/connectors';
 import {
   QueryClientProvider,
