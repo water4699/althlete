@@ -5,7 +5,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { sepolia } from 'wagmi/chains';
+import { hardhat, sepolia } from 'wagmi/chains';
 import { metaMask, injected } from 'wagmi/connectors';
 import {
   QueryClientProvider,
@@ -16,13 +16,20 @@ import { MetaMaskProvider } from "@/hooks/metamask/useMetaMaskProvider";
 import { InMemoryStorageProvider } from "@/hooks/useInMemoryStorage";
 import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthersSigner";
 
+// Dynamic chain configuration based on environment
+const isDevelopment = process.env.NODE_ENV === 'development';
+const chains = isDevelopment ? [hardhat, sepolia] : [sepolia];
+
 const config = createConfig({
-  chains: [sepolia],
+  chains,
   connectors: [
     metaMask(),
     injected(),
   ],
   transports: {
+    ...(isDevelopment && {
+      [hardhat.id]: http('http://localhost:8545'),
+    }),
     [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
   },
   ssr: false,
@@ -107,14 +114,14 @@ export function Providers({ children }: Props) {
           locale="en"
           modalSize="compact"
           theme={customTheme}
-          initialChain={sepolia}
+          initialChain={isDevelopment ? hardhat : sepolia}
           showRecentTransactions={false}
           // Force show wallet options
           coolMode={false}
           // Minimal configuration to avoid external API calls
           appInfo={{
             appName: 'Athlete Registration System',
-            learnMoreUrl: 'https://sepolia.etherscan.io',
+            learnMoreUrl: isDevelopment ? 'http://localhost:3000' : 'https://sepolia.etherscan.io',
           }}
         >
           <MetaMaskProvider>
