@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import '@rainbow-me/rainbowkit/styles.css';
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, createConfig, http } from 'wagmi';
+import { WagmiProvider, createConfig, http, type Transport } from 'wagmi';
 import { hardhat, sepolia, type Chain } from 'wagmi/chains';
 import { metaMask, injected } from 'wagmi/connectors';
 import {
@@ -20,7 +20,7 @@ import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthers
 const isDevelopment = process.env.NODE_ENV === 'development';
 
 let chains: readonly [Chain, ...Chain[]];
-let transports: Record<number, any>;
+let transports: Record<number, Transport>;
 
 if (isDevelopment) {
   chains = [hardhat, sepolia];
