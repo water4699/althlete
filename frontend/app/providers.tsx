@@ -5,7 +5,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { WagmiProvider, createConfig, http } from 'wagmi';
-import { hardhat, sepolia } from 'wagmi/chains';
+import { sepolia } from 'wagmi/chains';
 import { metaMask, injected } from 'wagmi/connectors';
 import {
   QueryClientProvider,
@@ -17,14 +17,13 @@ import { InMemoryStorageProvider } from "@/hooks/useInMemoryStorage";
 import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthersSigner";
 
 const config = createConfig({
-  chains: [hardhat, sepolia],
+  chains: [sepolia],
   connectors: [
     metaMask(),
     injected(),
   ],
   transports: {
-    [hardhat.id]: http('http://localhost:8545'),
-    [sepolia.id]: http(`https://sepolia.infura.io/v3/b18fb7e6ca7045ac83c41157ab93f990`),
+    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
   },
   ssr: false,
 });
@@ -108,14 +107,14 @@ export function Providers({ children }: Props) {
           locale="en"
           modalSize="compact"
           theme={customTheme}
-          initialChain={hardhat}
+          initialChain={sepolia}
           showRecentTransactions={false}
           // Force show wallet options
           coolMode={false}
           // Minimal configuration to avoid external API calls
           appInfo={{
             appName: 'Athlete Registration System',
-            learnMoreUrl: 'http://localhost:3000',
+            learnMoreUrl: 'https://sepolia.etherscan.io',
           }}
         >
           <MetaMaskProvider>
