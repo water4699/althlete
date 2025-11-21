@@ -133,6 +133,9 @@ export function Providers({ children }: Props) {
             appName: 'Athlete Registration System',
             learnMoreUrl: isDevelopment ? 'http://localhost:3000' : 'https://sepolia.etherscan.io',
           }}
+          chainStatus="icon"  // Show chain status icon
+          accountStatus="avatar"  // Show account avatar
+          showBalance={true}  // Show balance in account button
         >
           <MetaMaskProvider>
             <MetaMaskEthersSignerProvider initialMockChains={{}}>
