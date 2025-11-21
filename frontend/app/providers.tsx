@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import '@rainbow-me/rainbowkit/styles.css';
 
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, createConfig, http } from 'wagmi';
+import { WagmiProvider, createConfig, http, type Chain } from 'wagmi';
 import { hardhat, sepolia } from 'wagmi/chains';
 import { metaMask, injected } from 'wagmi/connectors';
 import {
@@ -18,7 +18,7 @@ import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthers
 
 // Dynamic chain configuration based on environment
 const isDevelopment = process.env.NODE_ENV === 'development';
-const chains: readonly [any, ...any[]] = isDevelopment ? [hardhat, sepolia] : [sepolia];
+const chains: readonly [Chain, ...Chain[]] = isDevelopment ? [hardhat, sepolia] : [sepolia];
 
 const config = createConfig({
   chains,
