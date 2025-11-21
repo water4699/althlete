@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useFhevm } from "../fhevm/useFhevm";
 import { useInMemoryStorage } from "../hooks/useInMemoryStorage";
 import { useMetaMaskEthersSigner } from "../hooks/metamask/useMetaMaskEthersSigner";
@@ -8,11 +8,11 @@ import { useAthleteRegistration, SportCategory } from "@/hooks/useAthleteRegistr
 
 export const AthleteRegistrationDemo = () => {
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
+  const storageRef = useRef(fhevmDecryptionSignatureStorage);
 
   const {
     provider,
     chainId,
-    accounts,
     isConnected,
     connect,
     ethersSigner,
@@ -25,8 +25,6 @@ export const AthleteRegistrationDemo = () => {
 
   const {
     instance: fhevmInstance,
-    status: fhevmStatus,
-    error: fhevmError,
   } = useFhevm({
     provider,
     chainId,
@@ -36,7 +34,7 @@ export const AthleteRegistrationDemo = () => {
 
   const athleteRegistration = useAthleteRegistration({
     instance: fhevmInstance,
-    fhevmDecryptionSignatureStorage,
+    fhevmDecryptionSignatureStorage: storageRef,
     eip1193Provider: provider,
     chainId,
     ethersSigner,

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { metaMask } from 'wagmi/connectors';
 
 export function WalletConnect() {
   const { address, isConnected } = useAccount();

@@ -27,10 +27,6 @@ const config = createConfig({
     [sepolia.id]: http(`https://sepolia.infura.io/v3/b18fb7e6ca7045ac83c41157ab93f990`),
   },
   ssr: false,
-  // Disable all telemetry and analytics to prevent external API calls
-  enableWalletConnect: false,
-  enableInjected: true,
-  enableCoinbaseWallet: false,
 });
 
 const queryClient = new QueryClient({

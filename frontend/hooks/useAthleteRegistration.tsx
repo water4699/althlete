@@ -154,9 +154,9 @@ export type UseAthleteRegistrationParameters = {
   eip1193Provider: any;
   chainId: number | undefined;
   ethersSigner: ethers.Signer | undefined;
-  ethersReadonlyProvider: ethers.Provider | undefined;
-  sameChain: boolean;
-  sameSigner: boolean;
+  ethersReadonlyProvider: ethers.ContractRunner | undefined;
+  sameChain: RefObject<(chainId: number | undefined) => boolean>;
+  sameSigner: RefObject<(ethersSigner: ethers.JsonRpcSigner | undefined) => boolean>;
 };
 
 /**

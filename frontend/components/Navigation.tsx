@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 export function Navigation() {
