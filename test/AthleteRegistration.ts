@@ -220,7 +220,7 @@ describe("AthleteRegistration", function () {
     const name = 12345;
     const age = 15;
     const contact = 67890;
-    const invalidCategory = 5; // Invalid category
+    const invalidCategory = 10; // Invalid category (out of range)
 
     const encryptedName = await fhevm
       .createEncryptedInput(athleteRegistrationContractAddress, signers.alice.address)

@@ -1,26 +1,25 @@
-import "@fhevm/hardhat-plugin";
-import "@nomicfoundation/hardhat-chai-matchers";
-import "@nomicfoundation/hardhat-ethers";
-import "@nomicfoundation/hardhat-verify";
-import "@typechain/hardhat";
-import "hardhat-deploy";
-import "hardhat-gas-reporter";
-import type { HardhatUserConfig } from "hardhat/config.js";
-import { vars } from "hardhat/config.js";
-import "solidity-coverage";
+require("@fhevm/hardhat-plugin");
+require("@nomicfoundation/hardhat-chai-matchers");
+require("@nomicfoundation/hardhat-ethers");
+require("@nomicfoundation/hardhat-verify");
+require("@typechain/hardhat");
+require("hardhat-deploy");
+require("hardhat-gas-reporter");
+require("solidity-coverage");
 
-import "./tasks/accounts.js";
-import "./tasks/AthleteRegistration.js";
+require("./tasks/accounts");
+require("./tasks/AthleteRegistration");
 
 // Run 'npx hardhat vars setup' to see the list of variables that need to be set
 
-const MNEMONIC: string = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
-const INFURA_API_KEY: string = vars.get("INFURA_API_KEY", "zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz");
+const MNEMONIC = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
+const INFURA_API_KEY = vars.get("INFURA_API_KEY", "b18fb7e6ca7045ac83c41157ab93f990");
+const PRIVATE_KEY = process.env.PRIVATE_KEY || "0x6997ba8119ffba8c5133e76a945a145b2e3f02eb98ffcfd9c81cfd2cd72f8216";
 
-const config: HardhatUserConfig = {
+const config = {
   defaultNetwork: "hardhat",
   namedAccounts: {
-    deployer: 0,
+    deployer: 0, // Use first account from accounts array
   },
   etherscan: {
     apiKey: {
@@ -49,11 +48,7 @@ const config: HardhatUserConfig = {
       url: "http://localhost:8545",
     },
     sepolia: {
-      accounts: {
-        mnemonic: MNEMONIC,
-        path: "m/44'/60'/0'/0/",
-        count: 10,
-      },
+      accounts: [PRIVATE_KEY],
       chainId: 11155111,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
     },
@@ -87,4 +82,4 @@ const config: HardhatUserConfig = {
   },
 };
 
-export default config;
+module.exports = config;
