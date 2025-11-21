@@ -18,7 +18,22 @@ import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthers
 
 // Dynamic chain configuration based on environment
 const isDevelopment = process.env.NODE_ENV === 'development';
-const chains: readonly [Chain, ...Chain[]] = isDevelopment ? [hardhat, sepolia] : [sepolia];
+
+let chains: readonly [Chain, ...Chain[]];
+let transports: Record<number, any>;
+
+if (isDevelopment) {
+  chains = [hardhat, sepolia];
+  transports = {
+    [hardhat.id]: http('http://localhost:8545'),
+    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
+  };
+} else {
+  chains = [sepolia];
+  transports = {
+    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
+  };
+}
 
 const config = createConfig({
   chains,
@@ -26,12 +41,7 @@ const config = createConfig({
     metaMask(),
     injected(),
   ],
-  transports: {
-    ...(isDevelopment && {
-      [hardhat.id]: http('http://localhost:8545'),
-    }),
-    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
-  },
+  transports,
   ssr: false,
 });
 
