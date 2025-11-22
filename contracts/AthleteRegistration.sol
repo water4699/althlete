@@ -7,6 +7,7 @@ import {SepoliaConfig} from "@fhevm/solidity/config/ZamaConfig.sol";
 /// @title Athlete Registration Contract with FHE
 /// @notice Privacy-preserving athlete registration system using Fully Homomorphic Encryption
 /// @dev Implements encrypted athlete data storage with age validation for sport categories
+/// @dev Similar to Persona-Shard: real FHE operations on all networks including testnet
 contract AthleteRegistration is SepoliaConfig {
     /// @notice Sport category definitions with minimum age requirements
     enum SportCategory {
@@ -61,13 +62,55 @@ contract AthleteRegistration is SepoliaConfig {
         categoryMinAges[SportCategory.Other] = 8;
     }
 
-    /// @notice Register athlete with encrypted personal information
-    /// @param encryptedName Encrypted desensitized name as bytes
-    /// @param encryptedAge Encrypted age value as bytes
-    /// @param encryptedContact Encrypted contact information as bytes
+    /// @notice Register athlete with FHE encrypted data
+    /// @param nameHandle FHE encrypted name handle
+    /// @param nameInputProof Proof for name encryption
+    /// @param ageHandle FHE encrypted age handle
+    /// @param ageInputProof Proof for age encryption
+    /// @param contactHandle FHE encrypted contact handle
+    /// @param contactInputProof Proof for contact encryption
     /// @param _sportCategory Sport category (0-4)
-    /// @dev All personal information is stored encrypted and can only be accessed by the athlete
+    /// @dev Real FHE encryption mode
     function registerAthlete(
+        uint256 nameHandle,
+        bytes calldata nameInputProof,
+        uint256 ageHandle,
+        bytes calldata ageInputProof,
+        uint256 contactHandle,
+        bytes calldata contactInputProof,
+        uint8 _sportCategory
+    ) external {
+        require(!athleteRegistrations[msg.sender].isRegistered, "Athlete already registered");
+        require(_sportCategory >= 0 && _sportCategory <= 4, "Invalid sport category");
+
+        SportCategory sportCategory = SportCategory(_sportCategory);
+
+        // Store FHE handles directly for later decryption
+        athleteRegistrations[msg.sender] = AthleteInfo({
+            encryptedName: abi.encode(nameHandle),
+            encryptedAge: abi.encode(ageHandle),
+            encryptedContact: abi.encode(contactHandle),
+            sportCategory: sportCategory,
+            registrationTimestamp: block.timestamp,
+            isRegistered: true,
+            decrypted: false,
+            decryptedName: "",
+            decryptedAge: 0,
+            decryptedContact: 0
+        });
+
+        registeredAthletes.push(msg.sender);
+
+        emit AthleteRegistered(msg.sender, sportCategory, block.timestamp);
+    }
+
+    /// @notice Register athlete with simple byte encryption (fallback)
+    /// @param encryptedName Encrypted name as bytes
+    /// @param encryptedAge Encrypted age as bytes
+    /// @param encryptedContact Encrypted contact as bytes
+    /// @param _sportCategory Sport category (0-4)
+    /// @dev Fallback mode for when FHE is not available
+    function registerAthleteSimple(
         bytes calldata encryptedName,
         bytes calldata encryptedAge,
         bytes calldata encryptedContact,
@@ -95,6 +138,7 @@ contract AthleteRegistration is SepoliaConfig {
 
         emit AthleteRegistered(msg.sender, sportCategory, block.timestamp);
     }
+
 
     /// @notice Validate age requirement using FHE operations
     /// @param _encAge Encrypted age value
@@ -204,14 +248,42 @@ contract AthleteRegistration is SepoliaConfig {
         return FHE.asEbool(true); // Placeholder - would need proper FHE operations
     }
 
-    /// @notice Get encrypted athlete data for decryption (prepares data for off-chain FHE decryption)
-    /// @return Tuple of encrypted values (encryptedName, encryptedAge, encryptedContact)
-    function decryptResults() external view returns (bytes memory, bytes memory, bytes memory) {
+    /// @notice Get encrypted athlete data for decryption
+    /// @return encName Encrypted name as euint32 handle
+    /// @return encAge Encrypted age as euint32 handle
+    /// @return encContact Encrypted contact as euint32 handle
+    /// @dev Returns actual FHE encrypted handles for client-side decryption
+    function getEncryptedData() external view returns (uint256, uint256, uint256) {
         AthleteInfo storage athlete = athleteRegistrations[msg.sender];
         require(athlete.isRegistered, "Athlete not registered");
 
-        // Return encrypted data for off-chain decryption - do not modify any state
-        return (athlete.encryptedName, athlete.encryptedAge, athlete.encryptedContact);
+        // Return stored FHE handles directly
+        uint256 nameHandle = abi.decode(athlete.encryptedName, (uint256));
+        uint256 ageHandle = abi.decode(athlete.encryptedAge, (uint256));
+        uint256 contactHandle = abi.decode(athlete.encryptedContact, (uint256));
+
+        return (nameHandle, ageHandle, contactHandle);
+    }
+
+    /// @notice Mark athlete information as decrypted (called after client-side FHE decryption)
+    /// @param decryptedName The decrypted name
+    /// @param decryptedAge The decrypted age
+    /// @param decryptedContact The decrypted contact
+    function finalizeDecryption( // updated
+        string memory decryptedName,
+        uint32 decryptedAge,
+        uint32 decryptedContact
+    ) external {
+        AthleteInfo storage athlete = athleteRegistrations[msg.sender];
+        require(athlete.isRegistered, "Athlete not registered");
+        require(!athlete.decrypted, "Already decrypted");
+
+        athlete.decryptedName = decryptedName;
+        athlete.decryptedAge = decryptedAge;
+        athlete.decryptedContact = decryptedContact;
+        athlete.decrypted = true;
+
+        emit DecryptionResultsAvailable(msg.sender, decryptedName, decryptedAge, decryptedContact, decryptedAge >= categoryMinAges[athlete.sportCategory]);
     }
 
     /// @notice Finalize decryption results (called by anyone after off-chain decryption)

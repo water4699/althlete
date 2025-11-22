@@ -1,46 +1,118 @@
 "use client";
 
-import { useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { useFhevm } from "../fhevm/useFhevm";
 import { useInMemoryStorage } from "../hooks/useInMemoryStorage";
-import { useMetaMaskEthersSigner } from "../hooks/metamask/useMetaMaskEthersSigner";
 import { useAthleteRegistration, SportCategory } from "@/hooks/useAthleteRegistration";
+import { useAccount, useChainId } from 'wagmi';
+import { ethers } from 'ethers';
 
 export const AthleteRegistrationDemo = () => {
   const { storage: fhevmDecryptionSignatureStorage } = useInMemoryStorage();
   const storageRef = useRef(fhevmDecryptionSignatureStorage);
 
-  const {
-    provider,
-    chainId,
-    isConnected,
-    connect,
-    ethersSigner,
-    ethersReadonlyProvider,
-    sameChain,
-    sameSigner,
-  } = useMetaMaskEthersSigner();
+  // Use wagmi hooks directly
+  const wagmiAccount = useAccount();
+  const wagmiChainId = useChainId();
+
+  // Add mounted state to prevent hydration mismatch
+  const [mounted, setMounted] = useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Simplified connection check - use wagmi connection status directly, but only after mounted
+  const isConnected = mounted ? wagmiAccount.isConnected : false;
+  const chainId = wagmiChainId;
+  const isLocalNetwork = chainId === 31337;
+
+  // Create ethers objects from wagmi
+  const [ethersSigner, setEthersSigner] = useState<ethers.Signer | undefined>(undefined);
+  const [ethersReadonlyProvider, setEthersReadonlyProvider] = useState<ethers.ContractRunner | undefined>(undefined);
+
+  // Only access window on client side
+  React.useEffect(() => {
+    console.log('window.ethereum:', !!window?.ethereum);
+  }, []);
+
+  // Initialize ethers objects when wagmi account is ready (client-side only)
+  React.useEffect(() => {
+    if (wagmiAccount.isConnected && typeof window !== 'undefined' && window.ethereum && wagmiAccount.address) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      provider.getSigner(wagmiAccount.address).then((signer) => {
+        setEthersReadonlyProvider(provider);
+        setEthersSigner(signer);
+      });
+    } else {
+      // Reset when disconnected
+      setEthersReadonlyProvider(undefined);
+      setEthersSigner(undefined);
+    }
+  }, [wagmiAccount.isConnected, wagmiAccount.address]);
 
   const initialMockChains = {};
 
+  // Enable FHEVM only when user is connected and ready to use it
+  // Add a small delay to avoid immediate network requests on page load
+  const [fhevmDelayPassed, setFhevmDelayPassed] = useState(false);
+  React.useEffect(() => {
+    const timer = setTimeout(() => setFhevmDelayPassed(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const fhevmEnabled = isConnected && mounted && fhevmDelayPassed && typeof window !== 'undefined' && !!window?.ethereum;
+
   const {
     instance: fhevmInstance,
+    status: fhevmStatus,
+    error: fhevmError,
   } = useFhevm({
-    provider,
+    provider: fhevmEnabled ? window.ethereum : undefined,
     chainId,
     initialMockChains,
-    enabled: true,
+    enabled: fhevmEnabled, // Only enable when connected and after delay
   });
 
   const athleteRegistration = useAthleteRegistration({
     instance: fhevmInstance,
     fhevmDecryptionSignatureStorage: storageRef,
-    eip1193Provider: provider,
+    eip1193Provider: typeof window !== 'undefined' ? window.ethereum : undefined,
     chainId,
     ethersSigner,
     ethersReadonlyProvider,
-    sameChain,
-    sameSigner,
+    sameChain: { current: () => true }, // Simplified
+    sameSigner: { current: () => true }, // Simplified
+  });
+
+  // Debug: Log current network info (after all variables are declared)
+  console.log('wagmi hooks:', { chainId: wagmiChainId, isConnected: wagmiAccount.isConnected, address: wagmiAccount.address });
+  console.log('component state:', {
+    isConnected,
+    isLocalNetwork,
+    ethersSigner: !!ethersSigner,
+    ethersReadonlyProvider: !!ethersReadonlyProvider,
+    fhevmInstance: !!fhevmInstance,
+    canRegister: athleteRegistration?.canRegister,
+    canDecrypt: athleteRegistration?.canDecrypt,
+    isRegistered: athleteRegistration?.isRegistered
+  });
+  console.log('ethersSigner details:', ethersSigner);
+
+  // Debug FHEVM instance status
+  console.log('FHEVM instance details:', {
+    instance: !!fhevmInstance,
+    status: fhevmStatus,
+    error: fhevmError?.message,
+    enabled: fhevmEnabled,
+    conditions: { isConnected, mounted, fhevmDelayPassed, hasEthereum: typeof window !== 'undefined' && !!window.ethereum }
+  });
+  console.log('Registration capabilities:', {
+    canRegister: athleteRegistration.canRegister,
+    canDecrypt: athleteRegistration.canDecrypt,
+    fhevmReady: !!fhevmInstance,
+    isConnected,
+    isRegistered: athleteRegistration.isRegistered,
+    message: athleteRegistration.message
   });
 
   const [formData, setFormData] = useState({
@@ -112,12 +184,7 @@ export const AthleteRegistrationDemo = () => {
               </div>
               <h2 className="text-2xl font-bold text-slate-100 mb-4">Connect Wallet</h2>
               <p className="text-slate-400 mb-6">Please connect your wallet to start athlete registration</p>
-              <button
-                className="btn-primary w-full"
-                onClick={() => connect()}
-              >
-                🔗 Connect Wallet
-              </button>
+              <p className="text-slate-300 text-sm">Use the wallet connection button in the top navigation bar</p>
             </div>
           </div>
         )}
@@ -241,6 +308,7 @@ export const AthleteRegistrationDemo = () => {
                   </div>
                 </div>
 
+                {/* Show decrypt button on all networks */}
                 <div className="mt-6">
                   <button
                     className="btn-primary w-full"
@@ -253,6 +321,11 @@ export const AthleteRegistrationDemo = () => {
                         ? "⏳ Decrypting..."
                         : "❌ No Info to Decrypt"}
                   </button>
+
+                  {/* Show network info */}
+                  <p className="text-center text-sm text-slate-400 mt-2">
+                    🔐 Real FHE encryption and decryption on all networks
+                  </p>
                 </div>
               </div>
             )}

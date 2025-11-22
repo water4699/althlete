@@ -9,16 +9,16 @@ const nextConfig: NextConfig = {
         headers: [
           {
             key: 'Cross-Origin-Opener-Policy',
-            value: 'unsafe-none',
+            value: 'same-origin-allow-popups',
           },
           {
             key: 'Cross-Origin-Embedder-Policy',
-            value: 'require-corp',
+            value: 'credentialless',
           },
-          // Allow necessary external resources for wallet functionality
+          // Re-enable CSP with proper RPC endpoints
           {
             key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' http://localhost:8545 ws://localhost:8545 https://metamask-sdk.api.cx.metamask.io https://mm-sdk-analytics.api.cx.metamask.io wss://*.walletconnect.org https://*.walletconnect.org; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
+            value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.zama.ai https://*.zama.ai https://*.walletconnect.org https://api.web3modal.org https://pulse.walletconnect.org https://cca-lite.coinbase.com; connect-src 'self' http://localhost:8545 ws://localhost:8545 https://metamask-sdk.api.cx.metamask.io https://mm-sdk-analytics.api.cx.metamask.io wss://*.walletconnect.org https://*.walletconnect.org https://api.web3modal.org https://pulse.walletconnect.org https://cca-lite.coinbase.com https://cdn.zama.ai https://*.zama.ai https://*.infura.io https://*.alchemy.com https://*.cloudflare-eth.com blob: https:; img-src 'self' data: https: blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests;",
           },
         ],
       },

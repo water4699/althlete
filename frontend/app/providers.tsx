@@ -3,45 +3,56 @@
 import type { ReactNode } from "react";
 import '@rainbow-me/rainbowkit/styles.css';
 
-import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
-import { WagmiProvider, createConfig, http, type Transport } from 'wagmi';
-import { hardhat, sepolia, type Chain } from 'wagmi/chains';
-import { metaMask, injected } from 'wagmi/connectors';
+import { RainbowKitProvider, getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { WagmiProvider, useChainId } from 'wagmi';
+import { sepolia } from 'wagmi/chains';
+import { http } from 'wagmi';
 import {
   QueryClientProvider,
   QueryClient,
+  useQueryClient,
 } from "@tanstack/react-query";
+import { useEffect } from 'react';
 
-import { MetaMaskProvider } from "@/hooks/metamask/useMetaMaskProvider";
 import { InMemoryStorageProvider } from "@/hooks/useInMemoryStorage";
-import { MetaMaskEthersSignerProvider } from "@/hooks/metamask/useMetaMaskEthersSigner";
 
-// Dynamic chain configuration based on environment
-const isDevelopment = process.env.NODE_ENV === 'development';
+// Custom localhost chain with correct chainId for Hardhat
+const hardhatLocalhost = {
+  id: 31337,
+  name: 'Hardhat Localhost',
+  network: 'hardhat',
+  nativeCurrency: {
+    decimals: 18,
+    name: 'Ether',
+    symbol: 'ETH',
+  },
+  rpcUrls: {
+    default: { http: ['http://127.0.0.1:8545'] },
+    public: { http: ['http://127.0.0.1:8545'] },
+  },
+  blockExplorers: {
+    default: { name: 'Hardhat Explorer', url: 'http://127.0.0.1:8545' },
+  },
+  testnet: true,
+};
 
-let chains: readonly [Chain, ...Chain[]];
-let transports: Record<number, Transport>;
+// Environment variable for Infura API key - fallback to demo key
+const INFURA_API_KEY = process.env.NEXT_PUBLIC_INFURA_API_KEY || 'demo-key-for-testing';
 
-if (isDevelopment) {
-  chains = [hardhat, sepolia];
-  transports = {
-    [hardhat.id]: http('http://localhost:8545'),
-    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
-  };
-} else {
-  chains = [sepolia];
-  transports = {
-    [sepolia.id]: http(`https://sepolia.infura.io/v3/${process.env.NEXT_PUBLIC_INFURA_API_KEY || 'b18fb7e6ca7045ac83c41157ab93f990'}`),
-  };
-}
-
-const config = createConfig({
-  chains,
-  connectors: [
-    metaMask(),
-    injected(),
-  ],
-  transports,
+const config = getDefaultConfig({
+  appName: 'Athlete Registration System',
+  projectId: 'ef3325a718834a2b1b4134d3f520933d', // User's WalletConnect Project ID
+  chains: [hardhatLocalhost, sepolia],
+  transports: {
+    [hardhatLocalhost.id]: http('http://127.0.0.1:8545', {
+      batch: false,
+      timeout: 60000,
+    }),
+    [sepolia.id]: http(`https://sepolia.infura.io/v3/${INFURA_API_KEY}`, {
+      batch: false,
+      timeout: 60000,
+    }),
+  },
   ssr: false,
 });
 
@@ -51,6 +62,25 @@ const queryClient = new QueryClient({
       // Disable background refetching to prevent network errors
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
+      // Add retry logic for network errors
+      retry: (failureCount, error) => {
+        // Don't retry on network errors (like network changes)
+        if (error?.message?.includes('network changed')) {
+          return false;
+        }
+        return failureCount < 3;
+      },
+      // Shorter stale time for network-dependent data
+      staleTime: 30000, // 30 seconds
+    },
+    mutations: {
+      // Retry mutations on network errors
+      retry: (failureCount, error) => {
+        if (error?.message?.includes('network changed')) {
+          return false;
+        }
+        return failureCount < 2;
+      },
     },
   },
 });
@@ -59,90 +89,39 @@ type Props = {
   children: ReactNode;
 };
 
-// Custom RainbowKit theme to avoid external dependencies
-const customTheme = {
-  blurs: {
-    modalOverlay: 'blur(4px)',
-  },
-  colors: {
-    accentColor: '#7c3aed',
-    accentColorForeground: '#ffffff',
-    actionButtonBorder: '#d1d5db',
-    actionButtonBorderMobile: '#d1d5db',
-    actionButtonSecondaryBackground: '#f9fafb',
-    closeButton: '#6b7280',
-    closeButtonBackground: '#f9fafb',
-    connectButtonBackground: '#7c3aed',
-    connectButtonBackgroundError: '#ef4444',
-    connectButtonInnerBackground: '#ffffff',
-    connectButtonText: '#ffffff',
-    connectButtonTextError: '#ffffff',
-    connectionIndicator: '#10b981',
-    downloadBottomCardBackground: '#ffffff',
-    downloadTopCardBackground: '#ffffff',
-    error: '#ef4444',
-    generalBorder: '#e5e7eb',
-    generalBorderDim: '#f3f4f6',
-    menuItemBackground: '#f9fafb',
-    modalBackdrop: 'rgba(0, 0, 0, 0.5)',
-    modalBackground: '#ffffff',
-    modalBorder: '#e5e7eb',
-    modalText: '#374151',
-    modalTextDim: '#6b7280',
-    modalTextSecondary: '#6b7280',
-    profileAction: '#7c3aed',
-    profileActionHover: '#581c87',
-    profileForeground: '#ffffff',
-    selectedOptionBorder: '#7c3aed',
-    standby: '#6b7280',
-  },
-  fonts: {
-    body: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  },
-  radii: {
-    actionButton: '8px',
-    connectButton: '8px',
-    menuButton: '8px',
-    modal: '12px',
-    modalMobile: '16px',
-  },
-  shadows: {
-    connectButton: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    dialog: '0 8px 32px rgba(0, 0, 0, 0.32)',
-    profileDetailsAction: '0 2px 6px rgba(0, 0, 0, 0.1)',
-    selectedOption: '0 2px 6px rgba(0, 0, 0, 0.1)',
-    selectedWallet: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    walletLogo: '0 2px 16px rgba(0, 0, 0, 0.04)',
-  },
-};
+
+// Internal component to handle network change events
+function NetworkChangeHandler({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
+  const chainId = useChainId();
+
+  useEffect(() => {
+    // Clear all queries when network changes to prevent stale data
+    queryClient.clear();
+
+    // Log network change for debugging
+    console.log('Network changed to:', chainId);
+  }, [chainId, queryClient]);
+
+  return <>{children}</>;
+}
 
 export function Providers({ children }: Props) {
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          locale="en"
-          modalSize="compact"
-          theme={customTheme}
-          initialChain={isDevelopment ? hardhat : sepolia}
-          showRecentTransactions={false}
-          // Force show wallet options
-          coolMode={false}
-          // Minimal configuration to avoid external API calls
-          appInfo={{
-            appName: 'Athlete Registration System',
-            learnMoreUrl: isDevelopment ? 'http://localhost:3000' : 'https://sepolia.etherscan.io',
-          }}
-          chainStatus="icon"  // Show chain status icon
-          accountStatus="avatar"  // Show account avatar
-          showBalance={true}  // Show balance in account button
-        >
-          <MetaMaskProvider>
-            <MetaMaskEthersSignerProvider initialMockChains={{}}>
-              <InMemoryStorageProvider>{children}</InMemoryStorageProvider>
-            </MetaMaskEthersSignerProvider>
-          </MetaMaskProvider>
-        </RainbowKitProvider>
+        <NetworkChangeHandler>
+          <RainbowKitProvider
+            locale="en"
+            modalSize="compact"
+            appInfo={{
+              appName: 'Athlete Registration System',
+              learnMoreUrl: 'http://localhost:3000',
+            }}
+          >
+        <InMemoryStorageProvider>{children}</InMemoryStorageProvider>
+          </RainbowKitProvider>
+        </NetworkChangeHandler>
       </QueryClientProvider>
     </WagmiProvider>
   );

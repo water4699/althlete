@@ -124,26 +124,26 @@ export const AthleteRegistrationABI = {
       "type": "function"
     },
     {
-      "inputs": [],
-      "name": "decryptResults",
-      "outputs": [
+      "inputs": [
         {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
+          "internalType": "string",
+          "name": "decryptedName",
+          "type": "string"
         },
         {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
+          "internalType": "uint32",
+          "name": "decryptedAge",
+          "type": "uint32"
         },
         {
-          "internalType": "bytes",
-          "name": "",
-          "type": "bytes"
+          "internalType": "uint32",
+          "name": "decryptedContact",
+          "type": "uint32"
         }
       ],
-      "stateMutability": "view",
+      "name": "finalizeDecryption",
+      "outputs": [],
+      "stateMutability": "nonpayable",
       "type": "function"
     },
     {
@@ -293,6 +293,29 @@ export const AthleteRegistrationABI = {
     },
     {
       "inputs": [],
+      "name": "getEncryptedData",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
       "name": "getEncryptedName",
       "outputs": [
         {
@@ -372,6 +395,49 @@ export const AthleteRegistrationABI = {
     {
       "inputs": [
         {
+          "internalType": "uint256",
+          "name": "nameHandle",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "nameInputProof",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "ageHandle",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "ageInputProof",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint256",
+          "name": "contactHandle",
+          "type": "uint256"
+        },
+        {
+          "internalType": "bytes",
+          "name": "contactInputProof",
+          "type": "bytes"
+        },
+        {
+          "internalType": "uint8",
+          "name": "_sportCategory",
+          "type": "uint8"
+        }
+      ],
+      "name": "registerAthlete",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
           "internalType": "bytes",
           "name": "encryptedName",
           "type": "bytes"
@@ -392,7 +458,7 @@ export const AthleteRegistrationABI = {
           "type": "uint8"
         }
       ],
-      "name": "registerAthlete",
+      "name": "registerAthleteSimple",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
